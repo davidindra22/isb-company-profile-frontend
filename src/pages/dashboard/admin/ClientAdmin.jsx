@@ -3,15 +3,14 @@ import api from "../../../../axios";
 
 // component
 import Button from "../../../components/Button";
-import ModalEditClientLogo from "../../../components/admin/modal/clientLogo/modalEditClientLogo";
-import ModalDeleteClientLogo from "../../../components/admin/modal/clientLogo/modalDeleteClientLogo";
+import ModalEditClientLogo from "../../../components/admin/modal/clientLogo/ModalEditClientLogo";
+import ModalDeleteClientLogo from "../../../components/admin/modal/clientLogo/ModalDeleteClientLogo";
 
 // icons
 import { BsThreeDotsVertical } from "react-icons/bs";
 import ModalTambahClientLogo from "../../../components/admin/modal/clientLogo/ModalTambahClientLogo";
 
 export default function ClientAdmin() {
-
   const [data, setData] = useState([]);
   const [tambahData, setTambahData] = useState(false);
   const [editData, setEditData] = useState(null);

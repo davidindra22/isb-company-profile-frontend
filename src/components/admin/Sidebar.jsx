@@ -6,8 +6,6 @@ import { LuMenu } from "react-icons/lu";
 import { NavLink } from "react-router-dom";
 
 export default function Siderbar({ open }) {
-  //   const [open, setOpen] = React.useState(true);
-  // const role = "admin"; // contoh role, bisa diambil dari context atau props
 
   const user = JSON.parse(localStorage.getItem("user"));
   const role = user?.role;

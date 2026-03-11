@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 // icons
 import { LuMenu } from "react-icons/lu";
 import { CgProfile } from "react-icons/cg";
-import BeritaAdmin from "../../pages/dashboard/admin/BeritaAdmin";
 
 // api
 import api from "../../../axios";
