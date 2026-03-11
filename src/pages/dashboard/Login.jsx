@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import api from "../../../axios";
 import LoadingOverlay from "../../components/ui/LoadingOverlay";
 
+import image from "../../assets/logo-dashboard.png";
+
 export default function Login() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
@@ -58,11 +60,7 @@ export default function Login() {
       >
         <div className=" bg-white w-3/4 md:w-2/3 lg:w-1/3 rounded-xl py-8 px-6">
           <div className="w-full flex justify-center mb-4">
-            <img
-              src="../src/assets/logo-dashboard.png"
-              alt=""
-              className="w-25 "
-            />
+            <img src={image} alt="logo" className="w-25 " />
           </div>
           <h1 className="uppercase text-center font-bold">welcome back</h1>
           <br />
