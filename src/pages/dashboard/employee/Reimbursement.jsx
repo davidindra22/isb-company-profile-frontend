@@ -4,9 +4,9 @@ import api from "../../../../axios";
 import Button from "../../../components/Button";
 
 // components
-import TambahReimbursementModal from "../../../components/employee/tambahModalReimbursement";
-import EditReimbursementModal from "../../../components/employee/editModalReimbursement";
-import DeleteConfirmModal from "../../../components/employee/deleteModalReimbursement";
+import TambahReimbursementModal from "../../../components/employee/TambahModalReimbursement";
+import EditReimbursementModal from "../../../components/employee/EditModalReimbursement";
+import DeleteConfirmModal from "../../../components/employee/DeleteModalReimbursement";
 
 // icons
 import { BsThreeDotsVertical } from "react-icons/bs";

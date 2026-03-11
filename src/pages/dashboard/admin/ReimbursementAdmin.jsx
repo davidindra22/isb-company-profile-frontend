@@ -7,7 +7,7 @@ import { TbCircleDotted } from "react-icons/tb";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import { IoCloseCircleOutline } from "react-icons/io5";
 
-import EditReimbursementModal from "../../../components/admin/modal/editModalReimbursement";
+import EditReimbursementModal from "../../../components/admin/modal/EditModalAdminReimbursement";
 
 export default function ReimbursementAdmin() {
   const [reimbusements, setReimbusements] = useState([]);
