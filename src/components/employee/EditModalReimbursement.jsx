@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 import api from "../../../axios";
 
@@ -19,46 +19,70 @@ export default function EditReimbursementModal({ data, onClose, onResult }) {
 
     return date.toISOString().split("T")[0];
   };
-  const [deletedFotoIds, setDeletedFotoIds] = useState([]);
-  const [previewImg, setPreviewImg] = useState([]);
-  const fileInputRef = useRef(null);
 
   const [form, setForm] = useState({
+    id_reimbursement: data.id,
     activity_name: data.activity_name,
     start_date: formatDateForInput(data.start_date),
     end_date: formatDateForInput(data.end_date),
     amount: data.amount,
     status: data.status,
     reject_reason: data.reject_reason,
-    files: data.files || [],
-    newFiles: [],
+    bukti: data.bukti.map((bukti) => ({
+      id: bukti.id,
+      jumlah: bukti.jumlah,
+      keterangan: bukti.keterangan,
+      namefile: bukti.namefile,
+      tanggal: formatDateForInput(bukti.tanggal),
+      proof_file: null,
+    })),
   });
+
+  const tambahBukti = () => {
+    setForm((prev) => ({
+      ...prev,
+      bukti: [
+        ...(prev.bukti || []),
+        { id: null, jumlah: "", keterangan: "", proof_file: null, tanggal: "" },
+      ],
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setLoading(true);
-
     const formData = new FormData();
+
+    const isBuktiValid = form.bukti.every(
+      (item) => item.proof_file || item.namefile,
+    );
+
+    if (!isBuktiValid) {
+      alert("Semua bukti wajib memiliki foto!");
+      return;
+    }
+
+    setLoading(true);
 
     formData.append("activity_name", form.activity_name);
     formData.append("start_date", form.start_date);
     formData.append("end_date", form.end_date);
     formData.append("amount", form.amount);
 
-    // file baru
-    form.newFiles.forEach((file) => {
-      formData.append("proof_file", file);
-    });
+    // bukti
+    formData.append("bukti", JSON.stringify(form.bukti));
 
-    // file yang dihapus
-    formData.append("deletedFiles", JSON.stringify(deletedFotoIds));
+    // file baru
+    form.bukti.forEach((item, index) => {
+      if (item.proof_file) {
+        formData.append(`bukti[${index}][proof_file]`, item.proof_file);
+      }
+    });
 
     try {
       await api.put(`/api/edit-reimbursements/${data.id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
         },
       });
       onClose();
@@ -81,48 +105,29 @@ export default function EditReimbursementModal({ data, onClose, onResult }) {
     }
   };
 
-  // handle file input preview
-  const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    if (!selectedFiles.length) return;
+  const handleBuktiChange = (index, field, value) => {
+    const updatedBukti = [...form.bukti];
+    updatedBukti[index][field] = value;
 
-    setForm((prev) => ({
-      ...prev,
-      newFiles: [...(prev.newFiles || []), ...selectedFiles],
-    }));
-
-    setPreviewImg((prev) => [
-      ...(prev || []),
-      ...selectedFiles.map((file) => ({
-        file,
-        preview: URL.createObjectURL(file),
-      })),
-    ]);
-
-    e.target.value = "";
+    setForm({
+      ...form,
+      bukti: updatedBukti,
+    });
   };
 
-  const handleRemovePreview = (index) => {
-    setPreviewImg((prev) => {
-      URL.revokeObjectURL(prev[index]?.preview);
-      return prev.filter((_, i) => i !== index);
-    });
+  const total = form.bukti.reduce((acc, item) => {
+    return acc + Number(item.jumlah || 0);
+  }, 0);
 
-    setForm((prev) => ({
-      ...prev,
-      newFiles: (prev.newFiles || []).filter((_, i) => i !== index),
-    }));
-  };
+  // format rupiah
+  const formatRupiah = (value) => {
+    if (value === null || value === undefined) return "-";
 
-  // handle file deletion
-  const handleDeleteFoto = (file) => {
-    setForm((prev) => {
-      if (!prev) return prev;
-
-      const updatedFiles = (prev.files || []).filter((f) => f != file);
-      return { ...prev, files: updatedFiles };
-    });
-    setDeletedFotoIds((prev) => [...prev, file]);
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(value);
   };
 
   return (
@@ -172,88 +177,123 @@ export default function EditReimbursementModal({ data, onClose, onResult }) {
                 />
               </div>
             </div>
-            <div className="flex flex-col gap-1">
-              <label>Jumlah Dana</label>
-              <input
-                value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-              />
-            </div>
-            {form.status === "Rejected" && (
-              <div className="flex flex-col gap-1">
-                <label>Keterangan</label>
-                <textarea
-                  value={form.reject_reason}
-                  readOnly
-                  onChange={(e) =>
-                    setForm({ ...form, reject_reason: e.target.value })
-                  }
-                  className="border rounded px-2 py-1 h-20 resize-none"
-                />
-              </div>
-            )}
 
-            <div className="flex flex-col gap-1">
-              <label>Butki Foto</label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept="image/*"
-                name="proof_file"
-                onChange={handleFileChange}
-              />
-              {/* Preview file baru */}
-              {previewImg && previewImg.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {previewImg.map((item, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={item.preview}
-                        alt="Preview"
-                        className="w-24 h-24 object-cover rounded"
-                      />
-                      <button
-                        type="button"
-                        className="absolute top-1 left-1 bg-red-500 text-white text-xs p-0.5 rounded"
-                        onClick={() => handleRemovePreview(index)}
-                      >
-                        Hapus
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {form.bukti.map((item, index) => (
+              <div
+                key={index}
+                className="[&>div>input]:border [&>div>input]:p-2 [&>div>input]:rounded border-t"
+              >
+                <h6 className="mb-1">Upload Bukti No. {index + 1} </h6>
+                <div className="flex flex-col gap-1">
+                  <label>Bukti Foto</label>
 
-            {/* Preview file lama */}
-            {form.files && form.files.length > 0 && (
-              <div className="flex flex-col gap-2 mt-2">
-                <label>Preview Bukti Foto Yang sudah ada</label>
-                <div className="flex flex-wrap gap-2">
-                  {form.files.map((file, index) => (
-                    <div className="relative" key={file}>
-                      <img
-                        key={index}
-                        src={`${import.meta.env.VITE_API_URL}/uploads/reimbursements/${file}`}
-                        alt={`Proof ${index + 1}`}
-                        className="w-24 h-24 object-cover rounded"
-                      />
-                      <button
-                        type="button"
-                        className="absolute top-1 left-1 bg-red-500 hover:bg-red-800 text-white text-xs p-0.5 rounded"
-                        onClick={() => {
-                          handleDeleteFoto(file);
-                        }}
-                      >
-                        Hapus
-                      </button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) =>
+                      handleBuktiChange(index, "proof_file", e.target.files[0])
+                    }
+                  />
+
+                  {/* error */}
+                  {!item.proof_file && !item.namefile && (
+                    <p className="text-red-500 text-sm">
+                      Bukti foto wajib diisi
+                    </p>
+                  )}
+
+                  {/* preview */}
+                  {(item.namefile || item.proof_file) && (
+                    <div className="flex flex-col gap-2 mt-2">
+                      <label>Preview Bukti</label>
+                      <div className="relative w-fit">
+                        <img
+                          src={
+                            item.proof_file instanceof File
+                              ? URL.createObjectURL(item.proof_file)
+                              : `${import.meta.env.VITE_API_URL}/uploads/reimbursements/${item.namefile}`
+                          }
+                          className="w-24 h-24 object-cover rounded"
+                        />
+                      </div>
                     </div>
-                  ))}
+                  )}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label>Jumlah Dana</label>
+                  <input
+                    className="input"
+                    type="text"
+                    value={formatRupiah(form.bukti[index].jumlah)}
+                    placeholder="Biaya"
+                    inputMode="numeric"
+                    onChange={(e) => {
+                      let value = e.target.value;
+
+                      // Hapus semua selain angka
+                      value = value.replace(/[^0-9]/g, "");
+
+                      handleBuktiChange(index, "jumlah", value);
+                    }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label>Keterangan</label>
+                  <input
+                    className="input"
+                    type="text"
+                    value={form.bukti[index].keterangan}
+                    placeholder="Keterangan"
+                    required
+                    onChange={(e) =>
+                      handleBuktiChange(index, "keterangan", e.target.value)
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label>Tanggal</label>
+                  <input
+                    type="date"
+                    required
+                    value={form.bukti[index].tanggal}
+                    disabled={!form.start_date || !form.end_date}
+                    min={form.start_date}
+                    max={form.end_date}
+                    onChange={(e) =>
+                      handleBuktiChange(index, "tanggal", e.target.value)
+                    }
+                  />
                 </div>
               </div>
-            )}
+            ))}
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={tambahBukti}
+                className="border-2 border-blue-500 rounded px-4 py-2 hover:bg-blue-600 hover:text-white transition-colors duration-300 ease-in-out"
+              >
+                Tambah bukti
+              </button>
+            </div>
+            <div className="">
+              Total Dana: Rp {total.toLocaleString("id-ID")}
+            </div>
           </div>
+
+          {form.status === "Rejected" && (
+            <div className="flex flex-col gap-1">
+              <label>Keterangan</label>
+              <textarea
+                value={form.reject_reason}
+                readOnly
+                onChange={(e) =>
+                  setForm({ ...form, reject_reason: e.target.value })
+                }
+                className="border rounded px-2 py-1 h-20 resize-none"
+              />
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 mt-4">
             <button

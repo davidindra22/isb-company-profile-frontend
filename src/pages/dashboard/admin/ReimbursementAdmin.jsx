@@ -33,6 +33,7 @@ export default function ReimbursementAdmin() {
     });
 
     setReimbusements(res.data);
+    console.log(res.data);
   };
 
   useEffect(() => {
@@ -88,7 +89,6 @@ export default function ReimbursementAdmin() {
                 <th>Tanggal Mulai</th>
                 <th>Tanggal Selesai</th>
                 <th>Jumlah</th>
-                <th>Bukti Foto</th>
                 <th>Keterangan</th>
                 <th>Status</th>
                 <th></th>
@@ -106,22 +106,6 @@ export default function ReimbursementAdmin() {
                     </td>
                     <td className="text-center">{formatDate(item.end_date)}</td>
                     <td className="text-center">{formatRupiah(item.amount)}</td>
-                    <td>
-                      {item.files.length > 0 ? (
-                        <div className="flex flex-wrap flex-grow-1 flex-basis-1 gap-2">
-                          {item.files.map((img, i) => (
-                            <img
-                              key={i} // <--- Important: Add a unique key
-                              src={`${import.meta.env.VITE_API_URL}/uploads/reimbursements/${img}`}
-                              alt="Foto Layanan"
-                              className="w-20 h-20 object-cover rounded"
-                            />
-                          ))}
-                        </div> // <--- Close the .map
-                      ) : (
-                        <p className="text-gray-500">Tidak ada foto</p>
-                      )}
-                    </td>
                     <td className="text-center">{item.reject_reason || "-"}</td>
                     <td className="text-center">
                       <div

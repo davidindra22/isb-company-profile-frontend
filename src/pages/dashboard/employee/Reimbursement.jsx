@@ -13,6 +13,9 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import { TbCircleDotted } from "react-icons/tb";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import { IoCloseCircleOutline } from "react-icons/io5";
+import { IoMdCreate } from "react-icons/io";
+import { IoMdTrash } from "react-icons/io";
+import { IoMdPrint } from "react-icons/io";
 
 export default function ReimburseForm() {
   const [reimbusements, setReimbusements] = useState([]);
@@ -59,28 +62,6 @@ export default function ReimburseForm() {
       setAlert(null);
     }, 3000);
   };
-
-  const [open, setOpen] = useState(null);
-  const toogleDropdown = (id) => {
-    setOpen(open === id ? null : id);
-  };
-
-  // Tutup dropdown jika klik di luar
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        !event.target.closest(".dropdown-menu") &&
-        !event.target.closest(".dropdown-toggle")
-      ) {
-        setOpen(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   const fetchData = async () => {
     const token = localStorage.getItem("token");
@@ -172,15 +153,17 @@ export default function ReimburseForm() {
                       <td>{formatDate(item.end_date)}</td>
                       <td>{formatRupiah(item.amount)}</td>
                       <td>
-                        {item.files.length > 0 ? (
+                        {item.bukti?.length > 0 ? (
                           <div className="flex flex-wrap flex-grow-1 flex-basis-1 gap-2">
-                            {item.files.map((file, i) => (
-                              <img
-                                key={i}
-                                src={`${import.meta.env.VITE_API_URL}/uploads/reimbursements/${file}`}
-                                className="w-20 h-20 object-cover rounded"
-                              />
-                            ))}
+                            {item.bukti.map((bukti, i) =>
+                              bukti.namefile ? (
+                                <img
+                                  key={i}
+                                  src={`${import.meta.env.VITE_API_URL}/uploads/reimbursements/${bukti.namefile}`}
+                                  className="w-20 h-20 object-cover rounded"
+                                />
+                              ) : null,
+                            )}
                           </div>
                         ) : (
                           <span>Tidak ada bukti</span>
@@ -201,45 +184,38 @@ export default function ReimburseForm() {
                           {item.status}
                         </div>
                       </td>
-                      <td className="relative">
-                        <div className="inline-block text-left">
-                          {/* Tombol Trigger */}
+                      <td>
+                        <div className="flex flex-col justify-center items-center gap-2">
                           <button
-                            onClick={() => toogleDropdown(item.id)}
-                            className="dropdown-trigger p-2 rounded-full hover:bg-gray-200"
+                            onClick={() => {
+                              setEditData(item);
+                            }}
+                            className="flex flex-row px-2 py-1 items-center gap-2 bg-yellow-300 hover:bg-yellow-400 text-fuchsia font-semibold rounded-md transition-colors duration-300 ease-in-out"
                           >
-                            <BsThreeDotsVertical size={18} />
-                            <span className="sr-only">Options</span>
+                            <p>Edit</p>
+                            <IoMdCreate />
                           </button>
-
-                          {/* Dropdown Menu */}
-                          {open === item.id && (
-                            <ul className="dropdown-menu absolute right-0 mt-2 w-32 bg-white rounded-lg custShadow z-10 font-semibold">
-                              <li>
-                                <button
-                                  onClick={() => {
-                                    setEditData(item);
-                                    setOpen(null);
-                                  }}
-                                  className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                >
-                                  Edit
-                                </button>
-                              </li>
-
-                              <li>
-                                <button
-                                  onClick={() => {
-                                    setDeleteId(item.id);
-                                    setOpen(null);
-                                  }}
-                                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100"
-                                >
-                                  Hapus
-                                </button>
-                              </li>
-                            </ul>
-                          )}
+                          <button
+                            onClick={() => {
+                              setDeleteId(item.id);
+                            }}
+                            className="flex flex-row px-2 py-1 items-center gap-2 bg-red-300 hover:bg-red-400 text-red-800 font-semibold rounded-md transition-colors duration-300 ease-in-out"
+                          >
+                            <p>Hapus</p>
+                            <IoMdTrash />
+                          </button>
+                          <button
+                            onClick={() => {
+                              window.open(
+                                `${import.meta.env.VITE_API_URL}/api/auth/reimbursements/${item.id}/pdf`,
+                                "_blank",
+                              );
+                            }}
+                            className={`flex flex-row ${item.status !== "Approved" ? "hidden" : ""} px-2 py-1 items-center gap-2 bg-blue-300 hover:bg-blue-400 text-blue-800 font-semibold rounded-md transition-colors duration-300 ease-in-out`}
+                          >
+                            <p>Print</p>
+                            <IoMdPrint />
+                          </button>
                         </div>
                       </td>
                     </tr>

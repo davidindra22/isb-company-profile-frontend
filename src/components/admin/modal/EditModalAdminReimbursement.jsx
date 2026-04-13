@@ -19,6 +19,8 @@ export default function EditReimbursementModal({ data, onClose, onResult }) {
   };
 
   const statusOptions = ["Pending", "Rejected", "Approved"];
+
+  // format tanggal
   const formatDateForInput = (dateString) => {
     const date = new Date(dateString);
 
@@ -28,16 +30,27 @@ export default function EditReimbursementModal({ data, onClose, onResult }) {
     return date.toISOString().split("T")[0];
   };
 
+  // format Rupiah
+  const formatRupiah = (value) => {
+    if (value === null || value === undefined) return "-";
+
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(value);
+  };
+
   const [form, setForm] = useState({
     no: data.document_number,
     employee_name: data.employee_name,
     activity_name: data.activity_name,
     start_date: formatDateForInput(data.start_date),
     end_date: formatDateForInput(data.end_date),
-    amount: data.amount,
+    amount: formatRupiah(data.amount),
     status: data.status || "Pending",
     reject_reason: data.reject_reason,
-    files: data.files,
+    bukti: data.bukti,
   });
 
   const handleSubmit = async (e) => {
@@ -92,7 +105,7 @@ export default function EditReimbursementModal({ data, onClose, onResult }) {
         >
           <div className="mb-4">
             <h2 className="text-lg font-bold ">Detail Reimbursement</h2>
-            <h3>No. Pengajuan Reimbursement : {data.no}</h3>
+            <h3>No. Pengajuan Reimbursement : {form.no}</h3>
           </div>
 
           <div className="flex flex-col gap-1 [&>div>div]:mb-2 [&>div>div>input]:border [&>div>div>input]:rounded [&>div>div>input]:p-2 ">
@@ -146,6 +159,59 @@ export default function EditReimbursementModal({ data, onClose, onResult }) {
                 />
               </div>
             </div>
+            {form.bukti.map((item, index) => (
+              <div key={index} className="border-t mb-1.5">
+                <h6 className="mb-1">Upload Bukti No. {index + 1} </h6>
+                <div className="flex flex-col gap-1">
+                  <label>Keterangan</label>
+                  <input
+                    className="input-custom"
+                    type="text"
+                    value={item.keterangan || "-"}
+                    readOnly
+                  ></input>
+                </div>
+                <div className="grid grid-cols-2 gap-1 [&>div]:flex [&>div]:flex-col [&>div]:gap-1  [&>div>input]:border [&>div>input]:rounded [&>div>input]:p-2">
+                  <div>
+                    <label>tanggal</label>
+                    <input
+                      className="input-custom w-full"
+                      type="date"
+                      value={item.tanggal}
+                      readOnly
+                    ></input>
+                  </div>
+                  <div>
+                    <label>Jumlah</label>
+                    <input
+                      className="input-custom"
+                      value={formatRupiah(item.jumlah)}
+                      readOnly
+                    ></input>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label>Bukti Foto</label>
+                  {item.file ? (
+                    <div className="flex flex-wrap flex-grow-1 flex-basis-1 gap-2">
+                      <img
+                        src={`${import.meta.env.VITE_API_URL}/uploads/reimbursements/${item.file}`}
+                        alt="Foto Layanan"
+                        className="w-20 h-20 object-cover rounded"
+                        onClick={() =>
+                          setPreviewImg(
+                            `${import.meta.env.VITE_API_URL}/uploads/reimbursements/${item.file}`,
+                          )
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">Tidak ada foto</p>
+                  )}
+                </div>
+              </div>
+            ))}
+
             <div className="flex flex-col gap-1">
               <label>Jumlah Dana</label>
               <input
@@ -155,7 +221,7 @@ export default function EditReimbursementModal({ data, onClose, onResult }) {
                 className="input-custom border rounded px-2 py-1"
               />
             </div>
-            <div className="flex flex-col gap-1">
+            {/* <div className="flex flex-col gap-1">
               <label>Butki Foto</label>
               {form.files.length > 0 ? (
                 <div className="flex flex-wrap flex-grow-1 flex-basis-1 gap-2">
@@ -176,7 +242,7 @@ export default function EditReimbursementModal({ data, onClose, onResult }) {
               ) : (
                 <p className="text-gray-500">Tidak ada foto</p>
               )}
-            </div>
+            </div> */}
             <div className="flex flex-col gap-1">
               <label>Status</label>
               <select
